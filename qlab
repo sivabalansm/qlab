@@ -1,0 +1,108 @@
+#! /bin/bash
+
+default=$HOME/snapshots
+
+function get_inst {
+
+exit
+}
+
+# get all the snapshot files
+function get_snaps {
+
+exit
+}
+function start {
+
+exit
+}
+
+function write {
+[ -e $default/.instances ] || printf "" > $default/.instances
+if [ $? != 0 ]
+then
+	printf "Unable to create instances file $default/.instances\nExiting...\n"
+	exit 1
+fi
+
+printf "Name your instance: "
+read name
+printf "Qemu command (ex: qemu-system-x86 -m 2G...) with the drive option omitted\n> "
+read com
+printf "Full path of the OS drive (specified with -drive file=<path>)\n> "
+read drive_path
+printf "Any other drive options (ex: if=<interface>, bus=<bus>)[default: \"\"] "
+read ext
+
+if [ -n "$name" -a -n "$com" -a -n "$drive_path" ]
+then
+	printf "Is this your final command: $com -drive file=$drive_path,$ext(y/n) "
+	read ans
+	[ -z $ext ] && ext="none"
+	[ "$ans" = "y" ] && printf "$name@@@$com@@@$ext@@@$drive_path\n" >> $default/.instances || write
+else
+	printf "A parameter was left blank...\nRestarting\n"
+	write
+fi
+
+
+}
+
+function create {
+
+exit
+}
+function delete {
+
+exit
+}
+
+
+function main {
+	[ -d $default ] || mkdir -p $default
+	if [ $? != 0 ]
+	then
+		printf "Unable to create main virtualization directory for snapshots $default\nExiting...\n"
+		exit 1
+	fi
+
+	printf "1) Start an instance as a snapshot (temporary)\n\
+2) Write a new instance\n\
+2) Create a Snapshot file for an instance\n\
+3) Delete a Snapshot file for an instance\n\
+> "
+	read opt
+	case $opt in
+		1)
+			start
+			;;
+		2)
+			write
+			;;
+		3)
+			create
+			;;
+		4)
+			delete
+			;;
+		*)
+			printf "Option not found\nExiting...\n"
+			exit 1
+			;;
+	esac
+
+
+}
+
+printf "QLab - QEMU Snapshot manager\n\n"
+if qemu-img --version > /dev/null 2>&1
+then
+	while :
+	do
+		main
+	done
+else
+	printf "qemu-img not installed\n"
+	printf "Make sure you have qemu software\n"
+fi
+
