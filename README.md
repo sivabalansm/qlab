@@ -6,9 +6,11 @@ Make sure to have:
 
 ## Install & Run
 1. Start by cloning the repository:
-`git clone https://github.com/sivabalansm/qlab`
+```
+git clone https://github.com/sivabalansm/qlab
+```
 
-2. And to run
+2. Run the following to start the program:
 ```
 cd ./qlab
 chmod +x qlab
