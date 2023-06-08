@@ -1,10 +1,17 @@
 #! /bin/bash
 
+[ "$1" = "-d" ] && set -x
 default=$HOME/snapshots
 
 function get_inst {
+if [ -e $default/.instances ] 
+then	
+	printf "$(cat $default/.instances)"
+else
+	printf "No instance file\nExiting...\n" 1>&2
+	exit 1
+fi
 
-exit
 }
 
 # get all the snapshot files
@@ -12,9 +19,25 @@ function get_snaps {
 
 exit
 }
-function start {
 
-exit
+
+function start {
+if [ -e $default/.instances -a -s $default/.instances ]
+then
+	printf "Choose one of the following instances: \n"
+	awk -F "@@@" '{ if ( $3 == "none" ) print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4; else print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4","$3 }' $default/.instances
+	printf "> "; read instance
+	if [[ $instance =~ ^[0-9]+$ ]]
+	then
+		awk -F "@@@" 'NR == '$instance' { if ( $3 == "none" ) print $2" -drive file="$4; else print $2" -drive file="$4","$3 }' $default/.instances
+	else
+		printf "Number was not inputed\nRestarting...\n"
+		start
+	fi
+else
+	printf "No instances available\n"
+	exit 1
+fi
 }
 
 function write {
@@ -25,7 +48,7 @@ then
 	exit 1
 fi
 
-printf "Name your instance: "
+printf "\nName your instance: "
 read name
 printf "Qemu command (ex: qemu-system-x86 -m 2G...) with the drive option omitted\n> "
 read com
@@ -34,14 +57,14 @@ read drive_path
 printf "Any other drive options (ex: if=<interface>, bus=<bus>)[default: \"\"] "
 read ext
 
-if [ -n "$name" -a -n "$com" -a -n "$drive_path" ]
+if [ -n "$name" -a -n "$com" -a -n "$drive_path" ] && awk -F "@@@" '$1 ~ /'$name'/ { exit 1 }' $default/.instances
 then
 	printf "Is this your final command: $com -drive file=$drive_path,$ext(y/n) "
 	read ans
 	[ -z $ext ] && ext="none"
-	[ "$ans" = "y" ] && printf "$name@@@$com@@@$ext@@@$drive_path\n" >> $default/.instances || write
+	[ "$ans" = "y" ] && printf "$name@@@$com@@@$ext@@@${drive_path}\n" >> $default/.instances || write
 else
-	printf "A parameter was left blank...\nRestarting\n"
+	printf "A parameter was left blank or the your name is the same as a previously named instance...\nRestarting\n"
 	write
 fi
 

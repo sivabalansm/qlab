@@ -1,9 +1,10 @@
 # QLab - A simple QEMU snapshot manager
-WIP project, incomplete
+Mainly done to practice my bash and awk scripting, but actually useful for managing my messy virtual machines on the terminal
 
 Make sure to have:
 1. Qemu packages, especially `qemu-img`
-
+2. awk
+___
 ## Install & Run
 1. Start by cloning the repository:
 ```
@@ -17,5 +18,11 @@ chmod +x qlab
 ./qlab
 ```
 
+## To Do
+- ~~temporary snapshots starting~~
+- ~~writing instances to a file~~
+- creating snapshot files based on instances
+- deleting snapshot instances
+- deleting snapshot files
 
 
