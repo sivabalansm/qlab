@@ -29,7 +29,7 @@ then
 	printf "> "; read instance
 	if [[ $instance =~ ^[0-9]+$ ]]
 	then
-		awk -F "@@@" 'NR == '$instance' { if ( $3 == "none" ) print $2" -drive file="$4; else print $2" -drive file="$4","$3 }' $default/.instances
+		eval $(awk -F "@@@" 'NR == '$instance' { if ( $3 == "none" ) print $2" -drive file="$4; else print $2" -drive file="$4","$3 }' $default/.instances)
 	else
 		printf "Number was not inputed\nRestarting...\n"
 		start
