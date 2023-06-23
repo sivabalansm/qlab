@@ -21,8 +21,8 @@ chmod +x qlab
 ## To Do
 - ~~temporary snapshots starting~~
 - ~~writing instances to a file~~
+- ~~deleting snapshot instances~~
 - creating snapshot files based on instances
-- deleting snapshot instances
 - deleting snapshot files
 
 

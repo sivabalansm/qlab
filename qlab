@@ -15,7 +15,7 @@ then
 	printf "> "; read instance
 	if [[ $instance =~ ^[0-9]+$ ]]
 	then
-		eval $(awk -F "@@@" 'NR == '$instance' { if ( $3 == "none" ) print $2" -drive file="$4; else print $2" -drive file="$4","$3 }' $default_instf)
+		eval $(awk -F "@@@" 'NR == '$instance' { if ( $3 == "none" ) print $2" -drive file="$4" -snapshot"; else print $2" -drive file="$4","$3" -snapshot" }' $default_instf)&
 	elif [ "$instance" = "e" -o "$instance" = "exit" ]
 	then
 		printf "Returning to main menu\n"
@@ -60,7 +60,7 @@ read ext
 if [ "$name" = "exit" -o "$name" = "e" -o "$com" = "exit" -o "$com" = "e" -o "$drive_path" = "exit" -o "$drive_path" = "e" -o "$ext" = "exit" -o "$ext" = "e" ]
 then
 	printf "Returning to main menu\n"
-elif [ -n "$name" -a -n "$com" -a -n "$drive_path" ] && awk -F "@@@" '$1 ~ /'$name'/ { exit 1 }' $default_instf
+elif [ -n "$name" -a -n "$com" -a -n "$drive_path" ] && awk -F "@@@" "\$1 ~ /$name/ { exit 1 }" $default_instf
 then
 	printf "Is this your final command: $com -drive file=$drive_path,$ext(y/n) "
 	read ans
@@ -80,9 +80,15 @@ list_inst
 printf "Which instance would you like to delete: "
 read del
 
-if [ "$del" -le "$(wc -l $default_instf | awk '{ print $1 }')" -a "$del" -ge "1" ]
+if [ "$del" = "exit" -o "$del" = "e" ]
 then
-	awk 'NR != '$del' { print }
+	printf "Returning to main menu\n"
+elif [ "$del" -le "$(awk 'END { print NR }' $default_instf)" -a "$del" -ge "1" ]
+then
+	printf "$(awk 'NR != '$del' { print }' $default_instf)" > $default_instf
+else
+	printf "Invalid instance number\nRestarting...\n\n"
+	delete_inst
 fi
 
 }
@@ -110,7 +116,7 @@ function main {
 	printf "\n1) Start an instance as a snapshot (temporary)\n\
 2) List instances\n\
 3) Write a new instance\n\
-4) Delete a an instance\n\
+4) Delete an instance\n\
 5) Create a Snapshot file for an instance\n\
 6) Delete a Snapshot file for an instance\n\
 > "
