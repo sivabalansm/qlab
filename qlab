@@ -7,7 +7,7 @@ default_instf=$default/.instances
 
 # get all the snapshot files
 
-function start_tmp {
+function start {
 if [ -e $default_instf -a -s $default_instf ]
 then
 	printf "Choose one of the following instances: \n"
@@ -123,7 +123,7 @@ function main {
 	read opt
 	case $opt in
 		1)
-			start_tmp
+			start
 			;;
 		2)
 			list_inst
