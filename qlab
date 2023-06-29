@@ -3,6 +3,7 @@
 [ "$1" = "-d" ] && set -x
 default=$HOME/vm/snapshots
 default_instf=$default/.instances
+default_instf=./test.txt #$default/.instances
 
 
 # get all the snapshot files
@@ -12,11 +13,11 @@ if [ -e $default_instf -a -s $default_instf ]
 then
 	[ "$1" = "-tmp" ] && snapshot="-snapshot" || snapshot=""
 	printf "Choose one of the following instances: \n"
-	awk -F "@@@" '{ if ( $3 == "none" ) print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4; else print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4","$3 }' $default_instf
+	list_inst
 	printf "> "; read instance
 	if [[ $instance =~ ^[0-9]+$ ]]
 	then
-		eval $(awk -F "@@@" "NR == $instance { if ( \$3 == \"none\" ) print \$2\" -drive file=\"\$4\" $snapshot\"; else print \$2\" -drive file=\"\$4\",\"\$3\" $snapshot\" }" $default_instf)&
+		eval $(awk -F "@@@" '$1 !~ /^---.+/ { origin_command=$2; extra=$3 } NR == '$instance'{ if ($1 !~ /^---.+/) { if ( $3 == "none" ) print $2 " -drive file=" $4 " '$snapshot'"; else $2 " -drive file=" $4 "," $3 " '$snapshot'"} else { name=gensub(/^---/, "", 1, $1); if ( extra == "none" ) print origin_command " -drive file=" $2 " '$snapshot'"; else print origin_command " -drive file=" $2 "," extra " '$snapshot'" } }' $default_instf) &
 	elif [ "$instance" = "e" -o "$instance" = "exit" ]
 	then
 		printf "Returning to main menu\n"
@@ -34,7 +35,7 @@ function list_inst {
 if [ -e $default_instf ] 
 then	
 	printf "\nList of instances:\n\n"
-	awk -F "@@@" '{ if ( $3 == "none" ) print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4; else print "\n" NR ")\nName: "$1"\nCommand: "$2" -drive file="$4","$3 }' $default_instf
+	awk -F "@@@" '{ if ($1 !~ /^---.+/) { origin_name=$1; origin_command=$2; extra=$3;  if ( $3 == "none" ) print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4; else print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4 "," $3 } else { name=gensub(/^---/, "", 1, $1); if ( extra == "none" ) print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2; else print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2 "," extra } }' $default_instf
 else
 	printf "No instance file\nExiting...\n" 1>&2
 	exit 1
@@ -63,7 +64,7 @@ then
 	printf "Returning to main menu\n"
 elif [ -n "$name" -a -n "$com" -a -n "$drive_path" ] && awk -F "@@@" "\$1 ~ /$name/ { exit 1 }" $default_instf
 then
-	printf "Is this your final command: $com -drive file=$drive_path,$ext(y/n) "
+	printf "Is this your final command: $com -drive file=$drive_path$([ -n $ext ] && printf ",")$ext(y/n) "
 	read ans
 	[ -z $ext ] && ext="none"
 	[ "$ans" = "y" ] && printf "$name@@@$com@@@$ext@@@${drive_path}\n" >> $default_instf || write
@@ -76,7 +77,7 @@ fi
 }
 
 function delete_inst {
-[ -e $default_instf -a -s $default_instf ] || (printf "$default_instf not found or is empty\nExiting...\n" ; exit 1)
+[ -s $default_instf ] || (printf "$default_instf not found or is empty\nExiting...\n" ; exit 1)
 list_inst
 printf "Which instance would you like to delete: "
 read del
@@ -95,8 +96,8 @@ fi
 }
 
 function create_snap {
+[ -s $default_instf ] || (printf "$default_instf not found or is empty\nExiting...\n"; exit 1)
 
-exit
 }
 
 function delete_snap {
@@ -114,13 +115,13 @@ function main {
 		exit 1
 	fi
 
-	printf "\n1) Start an instance as a snapshot (temporary)\n\
-2) Start an instance with permenant storage\n\
-3) List instances\n\
-4) Write a new instance\n\
-5) Delete an instance\n\
-6) Create a Snapshot file for an instance\n\
-7) Delete a Snapshot file for an instance\n\
+	printf "\n\e[1m\e[35m1)\e[0m \e[36mStart an instance as a snapshot (temporary)\e[0m\n\
+\e[1m\e[35m2)\e[0m \e[97m\e[46mStart an instance with permenant storage\e[0m\n\
+\e[1m\e[35m3)\e[0m \e[33mList instances\e[0m\n\
+\e[1m\e[35m4)\e[0m \e[97m\e[44mWrite a new instance\e[0m\n\
+\e[1m\e[35m5)\e[0m \e[97m\e[41mDelete an instance\e[0m\n\
+\e[1m\e[35m6)\e[0m \e[34mCreate a Snapshot file for an instance\e[0m\n\
+\e[1m\e[35m7)\e[0m \e[31mDelete a Snapshot file for an instance\e[0m\n\
 > "
 	read opt
 	case $opt in
@@ -153,7 +154,7 @@ function main {
 
 }
 
-printf "QLab - QEMU Snapshot manager\n"
+printf "\e[1m\e[4m\e[35mQLab - QEMU Snapshot manager\e[0m\n"
 if qemu-img --version > /dev/null 2>&1
 then
 	while :
