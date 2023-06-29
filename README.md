@@ -1,4 +1,4 @@
-# QLab - A simple and QEMU snapshot manager
+# QLab - A simple and quick QEMU snapshot manager
 Do you have multiple qemu instances you run on the terminal? Have many shell scripts for every command? QLab solves this problem with a short and simple bash script that neatly organizes your VM's for you. Temporary boot ups, Permenant storage boots, creating snapshots of an instance to branch off all in one. 
 Stick to the terminal with a quick lab!
 
