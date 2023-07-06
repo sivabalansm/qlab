@@ -2,7 +2,6 @@
 
 [ "$1" = "-d" ] && set -x
 default=$HOME/vm/snapshots
-default_instf=$default/.instances
 default_instf=./test.txt #$default/.instances
 
 
@@ -35,7 +34,13 @@ function list_inst {
 if [ -e $default_instf ] 
 then	
 	printf "\nList of instances:\n\n"
-	awk -F "@@@" '{ if ($1 !~ /^---.+/) { origin_name=$1; origin_command=$2; extra=$3;  if ( $3 == "none" ) print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4; else print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4 "," $3 } else { name=gensub(/^---/, "", 1, $1); if ( extra == "none" ) print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2; else print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2 "," extra } }' $default_instf
+	if [ "$1" = "-inst" ]
+	then
+		awk -F "@@@" '$1 !~ /^---.+/ { if ( $3 == "none" ) print "\n" count ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4; else print "\n" count ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4 "," $3 ; count += 1 }' count=1 $default_instf
+
+	else
+		awk -F "@@@" '{ if ($1 !~ /^---.+/) { origin_name=$1; origin_command=$2; extra=$3;  if ( $3 == "none" ) print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4; else print "\n" NR ")\nName: \033[97m\033[44m" $1 "\033[0m\nCommand: " $2 " -drive file=" $4 "," $3 } else { name=gensub(/^---/, "", 1, $1); if ( extra == "none" ) print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2; else print "\n" NR ")\nName: \033[34m" name "\033[0m\nSnapshot of: " origin_name "\nCommand: " origin_command " -drive file=" $2 "," extra } }' $default_instf
+	fi
 else
 	printf "No instance file\nExiting...\n" 1>&2
 	exit 1
@@ -85,9 +90,9 @@ read del
 if [ "$del" = "exit" -o "$del" = "e" ]
 then
 	printf "Returning to main menu\n"
-elif [ "$del" -le "$(awk 'END { print NR }' $default_instf)" -a "$del" -ge "1" ]
+elif [ "$del" -le "$(awk  -F '@@@' '$1 !~ /^---.+/ { count += 1 } END { print count }' count=1 $default_instf)" -a "$del" -ge "1" ]
 then
-	printf "$(awk 'NR != '$del' { print }' $default_instf)" > $default_instf
+	printf "$(awk -F '@@@' '$1 !~ /^---.+/ { count += 1; print   } count == '$del' {  }' count=1 $default_instf)"
 else
 	printf "Invalid instance number\nRestarting...\n\n"
 	delete_inst
@@ -97,6 +102,7 @@ fi
 
 function create_snap {
 [ -s $default_instf ] || (printf "$default_instf not found or is empty\nExiting...\n"; exit 1)
+
 
 }
 
