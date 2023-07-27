@@ -102,6 +102,30 @@ fi
 
 function create_snap {
 [ -s $default_instf ] || (printf "$default_instf not found or is empty\nExiting...\n"; exit 1)
+list_inst -inst
+printf "Which of the following would you like to create a snapshot of? "
+read ans
+[[ "$ans" =~ ^[0-9]+$ ]] || (printf "Invalid option\n"; create_snap)
+[ "$ans" -ge "1" -a "$ans" -le "$(awk -F "@@@" 'BEGIN { count = 0 } $1 !~ /^---.+/ { count += 1 } END { print count }' $default_instf)" ] || create_snap
+printf "Enter a name for the snapshot: "
+read name
+printf "Enter a file name for the snapshot: "
+read file_name
+if [ "$name" = "exit" -o "$name" = "e" -o "$file_name" = "exit" -o "$file_name" = "e" ]
+then
+	printf "Returning to main menu\n"
+elif awk -F "@@@" '$1 ~ /^---.+/ { sub("---", "", $1); if (name == $1 || file_name == $2) exit 1 }' name="$name" file_name="$default/$file_name" $default_instf
+then
+	qemu-img create -f qcow2 -b $(awk -F "@@@" 'BEGIN { count=0 } $1 !~ /^---.+/ { count += 1; if (count == ans) { print $4; exit 0 } }' ans=$ans $default_instf) -F qcow2 $default/$file_name \
+		&& (printf "$(awk -F "@@@" 'BEGIN { count=0 } { if ($1 !~ /^---.+/) { count += 1; print $0; if (count == ans) print "---" name "@@@" file_name } else { print $0 }}' name="$name" file_name="$default/$file_name" ans=$ans $default_instf)" > $default_instf; printf "Snapshot \"$name\" created succussfully!\n" ) || printf "Unable to create a snapshot\n"
+else
+	printf "Name or File name already exits\nRestarting...\n"
+	create_snap
+fi
+
+
+
+
 
 
 }
